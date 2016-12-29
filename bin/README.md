@@ -5,9 +5,9 @@
 3. Try it!
 
 For example, the following command returns the usage of the program. 
-```help
+```
 rgpa_linux64_gomp4 -h 
-```help
+```
  
 ## About the Binary Files
 1. `rgpa_linux64_gomp3` is compiled with gcc-4.7.3 with OpenMP Application Program Interface v3.0 enabled.
