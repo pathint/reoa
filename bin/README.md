@@ -3,7 +3,7 @@
 1. Copy the executable (`rgpa_*`) file to the folder where your PATH can find, such as `/usr/local/bin/`.
 2.  Make sure the file have the executable permission.  If it does not, use `chmod +x rgpa_*` to make the modifications.
 3. Try it!
-*For example, the following command returns the usage of the program. 
+* For example, the following command returns the usage of the program. 
 
 ```
 rgpa_linux64_gomp4 -h 
