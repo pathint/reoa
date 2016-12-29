@@ -1,12 +1,13 @@
 ## Install from the Source File
 1. Run the command `make` under this folder (`src`).
 2. Copy the executable (`rgpa`) file to the folder where your PATH can find, such as `/usr/local/bin/`.
-2. Make sure the file have the executable permission.  If it does not, use `chmod +x rgpa` to make the modifications.
-3. Try it! For example, running the following command will return the usage of the program. 
+3. Make sure the file have the executable permission.  If it does not, use `chmod +x rgpa` to make the modifications.
+4. Try it! For example, running the following command will return the usage of the program. 
 
 ```
 rgpa -h 
 ```
+5. Besides the main program `rgpa`, four additional utility progroms, `binomial`, `hypergeom`, `fisher` and `random_sample`, should be generated. They are used to tes the statistical functions implemented in the package.   
 
 ## Trouble Shooting
 1. Make sure you have the basic tools installed on your system, such as `gcc`, `as` and `make`.
