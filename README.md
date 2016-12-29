@@ -1,6 +1,8 @@
 # Rank-based Gene Pair Analysis (rGPA)
 Rank-based gene pair analysis
 
+## Algorithm
+
 ## Usage
 how to use.
 
@@ -18,6 +20,6 @@ endmodule
 
 
 ## Contact Us
-If you would like to receive updates from the Cello team regarding bug fixes, patches, feature updates or if you would like to contact the Cello team, please check the links in [CONTACT.md](CONTACT.md)
+If you would like to receive updates from us regarding bug fixes, patches, feature updates or if you would like to contact us, please write to [1353023@qq.com](1353023@qq.com) or contact us at QQ/WeChat: 1353023.
 
 
