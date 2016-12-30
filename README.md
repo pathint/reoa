@@ -35,7 +35,7 @@ The recounted values *g2l* and *l2g*, and the values of *n*<sub>g</sub> and *n*<
 
 
 ### Dysregulated Genes, the RankCompV2 Algorithm
-description
+Because of the low statistical power of the original RankComp algorithm, we further developed the RankCompV2 algoithm.  In the RankCompV2 algoithm, the first step as described above is repeated until the number of up or down-regulated genes no longer changes. In the first step, all the genes are assumed to be not dysregulated and the contigency table is constructed based on all the concordant and reversal pairs. In the later cycles, if one gene of a pair is determined to be dysregulated in the previous cycle, the gene will not be counted for the other gene of the pair.        
 
 ## Usage
 how to use.
