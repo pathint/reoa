@@ -24,7 +24,7 @@ For one gene, *a*, we count the numbers of genes whose expression (or methylatio
 
 
  | the number of genes whose expression levels are higher than *a* | the number of genes whose expression levels are less than *a* 
------------- | -------------
+ | ------------ | -------------
 Normal | ng | nl
 Disease | dg | dl
 
