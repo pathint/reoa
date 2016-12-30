@@ -25,10 +25,13 @@ For one gene, *a*, we count the numbers of genes whose expression (or methylatio
 Group | the number of genes whose expression levels are higher than *a* | the number of genes whose expression levels are less than *a* 
 ---- | ------------ | -------------
 Normal | *n*<sub>g</sub> | *n*<sub>l</sub>
-Disease |*d*<sub>g</sub> | *d*<sub>g</sub>
+Disease |*d*<sub>g</sub> | *d*<sub>l</sub>
 
-[Fisher exact test](https://en.wikipedia.org/wiki/Fisher's_exact_test) is then used to calculate the *P* value under the null hypothesis which states that the number of genes whose experession levels are higher or lower has no association with disease state (absenece or presence). Then the [Benjamini–Hochberg procedure](https://en.wikipedia.org/wiki/False_discovery_rate) is used to control the false discovery rate (FDR) at level alpha, which is 0.05 by default. If the null hypothesis is rejected, the gene *a* is identified as a dysregulated gene. The dysregulation direction is judged by comparing *n*<sub>g</sub> / *n*<sub>l</sub> with *d*<sub>g</sub> / *d*<sub>g</sub>.
+[Fisher exact test](https://en.wikipedia.org/wiki/Fisher's_exact_test) is then used to calculate the *P* value under the null hypothesis which states that the number of genes whose experession levels are higher or lower has no association with disease state (absenece or presence). Then the [Benjamini–Hochberg procedure](https://en.wikipedia.org/wiki/False_discovery_rate) is used to control the false discovery rate (FDR) at level alpha, which is 0.05 by default. If the null hypothesis is rejected, the gene *a* is identified as a dysregulated gene. The dysregulation direction is judged by comparing *n*<sub>g</sub> / *n*<sub>l</sub> with *d*<sub>g</sub> / *d*<sub>l</sub>. 
 
+The above describes the first step in both the algorithms. In the original RankComp algorithm, one further step is carried out. We redo the counting based on the reversal pairs. For gene *a*, we count the number of genes whose expression level is greater than that of *a* in the normal group but becomes less than that of *a* in the disease group and the number of genes whose expression level is less than that of *a* in the normal group but becomes greater than that of *a* in the disease group. The numbers are labeled as *g2l* and *l2g*, respectively. After the initial step, each gene has been assigned to one of three possible states, up-regulated, down-regulated and not dysregulated. In the second step, for a reversal pair, *a* < *b* in the normal group and *a* > *b* in the disease group, if *a* is up-regulated, *a* will not be counted as *g2l* for *b* and if *b* is not down-regulated, *b* is not counted as *l2g* for *a*. This is to say, the reversed order may be due to the up-regulation of gene *a* or the down-regulation of gene *b* alone.  
+
+The recounted values *g2l* and *l2g*, and the values of *n*<sub>g</sub> and *n*<sub>l</sub> from the first step, are used to construct the above contigency table. Fisher exact test is again used to identify the dysregulated genes.         
 
 
 ### Dysregulated Genes, the RankCompV2 Algorithm
