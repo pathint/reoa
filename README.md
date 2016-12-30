@@ -23,8 +23,8 @@ Whether a gene is dysregulated or not in a disease cohort compared with normal c
 For one gene, *a*, we count the numbers of genes whose expression (or methylation etc) levels are higher and lower than this gene in the normal cohort and in the disease cohort. The counting is carried out for the concordant and reveral gene pairs only. Thus, we obtain the following contigency table.
 
 
- | the number of genes whose expression levels are higher than *a* | the number of genes whose expression levels are less than *a* 
- | ------------ | -------------
+Group | the number of genes whose expression levels are higher than *a* | the number of genes whose expression levels are less than *a* 
+---- | ------------ | -------------
 Normal | ng | nl
 Disease | dg | dl
 
