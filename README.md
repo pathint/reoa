@@ -22,17 +22,13 @@ Whether a gene is dysregulated or not in a disease cohort compared with normal c
 
 For one gene, *a*, we count the numbers of genes whose expression (or methylation etc) levels are higher and lower than this gene in the normal cohort and in the disease cohort. The counting is carried out for the concordant and reveral gene pairs only. Thus, we obtain the following contigency table.
 
-
 Group | the number of genes whose expression levels are higher than *a* | the number of genes whose expression levels are less than *a* 
 ---- | ------------ | -------------
-Normal | *n*<sub>g</sub> | nl
-Disease | dg | dl
+Normal | *n*<sub>g</sub> | *n*<sub>l</sub>
+Disease |*d*<sub>g</sub> | *d*<sub>g</sub>
 
+[Fisher exact test](https://en.wikipedia.org/wiki/Fisher's_exact_test) is then used to calculate the *P* value under the null hypothesis which states that the number of genes whose experession levels are higher or lower has no association with disease state (absenece or presence). Then the [Benjamini–Hochberg procedure](https://en.wikipedia.org/wiki/False_discovery_rate) is used to control the false discovery rate (FDR) at level alpha, which is 0.05 by default. If the null hypothesis is rejected, the gene *a* is identified as a dysregulated gene. The dysregulation direction is judged by comparing *n*<sub>g</sub> / *n*<sub>l</sub> with *d*<sub>g</sub> / *d*<sub>g</sub>.
 
-First Header | Second Header
------------- | -------------
-Content from cell 1 | Content from cell 2
-Content in the first column | Content in the second column
 
 
 ### Dysregulated Genes, the RankCompV2 Algorithm
