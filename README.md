@@ -70,7 +70,7 @@ There are two possible ways to install the program.
 Just copy the binary file to the folder where the executables are located, such as `/usr/local/bin`. It is recommended to use `rgpa_linux64_gomp4` which has the OpenMP 4.0 support.  See `README.md` under `bin` for further details.  
 
 2. *Compile from the Source Files*. 
-Under the `src` folder, run `make` command. Then copy the compiled `rgpa` to `/usr/local/bin` or other executable folder. If the compile does not finish successfully, you may need to change the settings in `Makefile` manually. See `README.md` under `src` for further details. 
+Under the `src` folder, run `make` command. Then copy the compiled `rgpa` to `/usr/local/bin` or other executable folder. If the compilation does not finish successfully, you may need to change the settings in `Makefile` manually. See `README.md` under `src` for further details. 
 
 ## License 
 This program is free software; it is released under the GNU GENERAL PUBLIC LICENSE Version 3. 
