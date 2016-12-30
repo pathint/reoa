@@ -49,9 +49,19 @@ rgpa --help
 ```
 The input data sets should be given as text-based data matrix data files. One file contains the microarray value matrix of one group of samples. The number of rows corresponds to the total number of gene probes and the number of rows corresponds to the sample size.  The values should be tab or space delimited. If multiple data sets are given as input, the number of genes should be the same. 
 
-The output gene pairs or dysregulated genes are given by the indices (0-based) of the genes. If the verbose option (`-v` or `--verbose`) is turn on, extensive amount of output will be printed out.
+The output gene pairs or dysregulated genes are given by the indices (starting from 0) of the genes. If the verbose option (`-v` or `--verbose`) is turn on, extensive amount of output will be printed out.  Please read the standard (screen) output for the names of the output files and the content format. 
 
+The most important option is `-j` (`--job`) which sets up the job type.  Job types 0~2 implement the identification of dysregulated genes and subtasks. Job types 3~4 are to generate simulation data sets and identify the dysregulated genes in simulated data sets. Job types 5~6 are to calculate the concordance scores between samples in one data set. 
 
+For most of job types, multiple data sets can be given. Three comparison modes are avaiable for selecting stable pairs and identifying dysregulated genes and related jobs. The choice can be made through the `-p` (`--pair`) option.  
+
+The choice of algorithm is specified by the `-a` (`--algorithm`) option. 
+
+For the small-scale samples, such as cell line technical replicates, exception numbers should be used to select stable pairs instead of FDR levels. And the exception number is usually set as 0. Furthermore, the option of `-q` (`--equals`) should be set as 0 as well. 
+
+The default sample type is 'cohort'. For individual-type samples, the option `-s` (`--sample`) should be set as 1. Each sample (column) in a data set is analyzed separately.    
+
+See the folder `test` for test cases. 
 
 ## Install 
 There are two possible ways to install the program.
