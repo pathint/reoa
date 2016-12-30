@@ -51,18 +51,12 @@ description
 description
 
 ## Install 
-description
+There are two ways to install the program.
+1. Install from the Precompiled Execulables.
+Just copy the binary file to the folder where the executables are located, such as `/usr/local/bin`. It is recommended to use `rgpa_linux64_gomp4` which has the OpenMP 4.0 support.  See `README.md` under `bin` for further details.  
 
-```
-module XOR(output out1,  input in1, in2);
-  wire w1, w2, w3, w4;
-  not (w1, in1);
-  not (w2, in2);
-  not (w3, in1, w2);
-  not (w4, in2, w1);
-  or (out1, w3, w4);
-endmodule
-```
+2. Compile from the source file. 
+Under the `src` folder, run `make` command. Then copy the compiled `rgpa` to `/usr/local/bin` or other executable folder. If the compile does not finish successfully, you may need to change the settings in `Makefile` manually. See `README.md` under `src` for further details. 
 
 ## License 
 This program is free software; it is released under the GNU GENERAL PUBLIC LICENSE Version 3. 
