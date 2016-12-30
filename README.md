@@ -47,6 +47,9 @@ or
 ```
 rgpa --help
 ```
+The input data sets should be given as text-based data matrix data files. One file contains the microarray value matrix of one group of samples. The number of rows corresponds to the total number of gene probes and the number of rows corresponds to the sample size.  The values should be tab or space delimited. If multiple data sets are given as input, the number of genes should be the same. 
+
+The output gene pairs or dysregulated genes are given by the indices (0-based) of the genes. If the verbose option (`-v` or `--verbose`) is turn on, extensive amount of output will be printed out.
 
 
 
