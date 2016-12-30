@@ -1,5 +1,9 @@
 # Rank-based Gene Pair Analysis (rGPA)
-Rank-based gene pair analysis
+This program implements the original RankComp and the RankCompV2 algorithms to detect the dysregulated genes. It is applicable to gene expression, methylation and other gene microarray data sets. Both large-scale cohort and individual samples or small-scale cell-line samples with two or three technical replicates can be analyzed. 
+
+If you publish results from using this progam, please cite the following paper.
+Hongwei Wang, Qiang Sun, Wenyuan Zhao, Lishuang Qi, Yunyan Gu, Pengfei Li, Mengmeng Zhang, Yang Li, Shu-Lin Liu, and Zheng Guo. (2015). Individual-level analysis of differential expression of genes and pathways for personalized medicine. Bioinformatics. 31(1):62-8. DOI:10.1093/bioinformatics/btu522
+
 
 ## Algorithm
 the method.
