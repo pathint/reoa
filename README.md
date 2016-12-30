@@ -51,7 +51,8 @@ description
 description
 
 ## Install 
-There are two ways to install the program.
+There are two possible ways to install the program.
+
 1. Install from the Precompiled Execulables.
 Just copy the binary file to the folder where the executables are located, such as `/usr/local/bin`. It is recommended to use `rgpa_linux64_gomp4` which has the OpenMP 4.0 support.  See `README.md` under `bin` for further details.  
 
