@@ -39,16 +39,16 @@ Because of the low statistical power of the original RankComp algorithm, we furt
 
 
 ## Usage
-how to use.
+The online help can be invoked by running the progrom with `-h` or `--help` option. 
+```
+rgpa -h
+```
+or
+```
+rgpa --help
+```
 
-### Scenario 1
-description
 
-### Scenario 2
-description
-
-### Scenario 3
-description
 
 ## Install 
 There are two possible ways to install the program.
