@@ -1,4 +1,4 @@
-# Rank-based Gene Pair Analysis (rGPA)
+# Relative Expression Ordering Analysis (REOA) package
 This program implements the original RankComp and the RankCompV2 algorithms to detect the dysregulated genes. It is applicable to gene expression, methylation and other gene microarray data sets. Both large-scale cohort and individual samples or small-scale cell-line samples with two or three technical replicates can be analyzed. 
 
 If you publish results from using this program, please cite the following paper.
