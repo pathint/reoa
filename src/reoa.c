@@ -1,7 +1,4 @@
 /**************************************************************************
- *  FSRP: Fast Stably Ranked Pair
- *        identify the stably ranked pairs given a matrix of size n*m,
- *        where n is the gene number and m is the sample size.
  *
  *  Xianlong Wang, Ph.D.
  *  University of Electronic Science and Technology of China.
