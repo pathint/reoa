@@ -23,8 +23,10 @@ A pair of genes, {*a*, *b*}, is considered as statistically stable if they hold 
 If a pair of genes, {*a*, *b*}, is significantly stable in both the normal group and the disease group and the orders are the same (either *a* < *b* or *a* > *b*), the pair is a concordant pair. Likewise, if a pair is stable in both groups, but the orders are different (*a* < *b* in one group, but *a* > *b* in the other group), the pair is called reversal pair.  Concordant and reversal gene pairs are the basic data to detect dysregulated genes.   
 
 
-### Dysregulated Genes, the Original RankComp Algorithm
+### Dysregulated Genes, the RankCompV2 Algorithm
 Whether a gene is dysregulated or not in a disease cohort compared with normal cohort is identified through the original RankComp algorithm or through the improved RankCompV2 algorithm. Here is a brief description on the algorithms. Interested users are advised to read the related papers.
+
+All the tested genes are going to be classified into three possible regulation directions, up-regulated, down-regulated and non-dysregulated. 
 
 For one gene, *a*, we count the numbers of genes whose expression (or methylation etc) levels are higher and lower than this gene in the normal cohort and in the disease cohort. The counting is carried out for the concordant and reversal gene pairs only. Thus, we obtain the following contingency table.
 
@@ -33,16 +35,12 @@ Group | Number of genes whose expression levels are higher than *a* | Number of 
 Normal | *n*<sub>g</sub> | *n*<sub>l</sub>
 Disease |*d*<sub>g</sub> | *d*<sub>l</sub>
 
-[Fisher exact test](https://en.wikipedia.org/wiki/Fisher's_exact_test) is then used to calculate the *P* value under the null hypothesis which states that the number of genes whose expression levels are higher or lower has no association with disease state (absence or presence). Then the [Benjamini–Hochberg procedure](https://en.wikipedia.org/wiki/False_discovery_rate) is used to control the false discovery rate (FDR) at level alpha, which is 0.05 by default. If the null hypothesis is rejected, the gene *a* is identified as a dysregulated gene. The dysregulation direction is judged by comparing *n*<sub>g</sub> / *n*<sub>l</sub> with *d*<sub>g</sub> / *d*<sub>l</sub>. 
+[Fisher exact test](https://en.wikipedia.org/wiki/Fisher's_exact_test) is then used to calculate the *P* value under the null hypothesis which states that the number of genes whose expression levels are higher or lower than the tested gene has no association with disease state (absence or presence). The [Benjamini–Hochberg procedure](https://en.wikipedia.org/wiki/False_discovery_rate) is used to control the false discovery rate (FDR) at level alpha, which is 0.05 by default. If the null hypothesis is rejected, the gene *a* is identified as a potential dysregulated gene (DEG). The dysregulation direction is judged by comparing *n*<sub>g</sub> / *n*<sub>l</sub> with *d*<sub>g</sub> / *d*<sub>l</sub> (equivalently, *n*<sub>g</sub> / (*n*<sub>g</sub> + *n*<sub>l</sub>) vs. *d*<sub>g</sub> / ( *d*<sub>g</sub> + *d*<sub>l</sub>)). 
 
-The above describes the first step in both the algorithms. In the original RankComp algorithm, one further step is carried out. We redo the counting based on the reversal pairs. For gene *a*, we count the number of genes whose expression level is greater than that of *a* in the normal group but becomes less than that of *a* in the disease group and the number of genes whose expression level is less than that of *a* in the normal group but becomes greater than that of *a* in the disease group. The numbers are labeled as *g2l* and *l2g*, respectively. After the initial step, each gene has been assigned to one of three possible states, up-regulated, down-regulated and not dysregulated. In the second step, for a reversal pair, *a* < *b* in the normal group and *a* > *b* in the disease group, if *a* is up-regulated, *a* will not be counted as *g2l* for *b* and if *b* is down-regulated, *b* is not counted as *l2g* for *a*. This is to say, the reversed order may be due to the up-regulation of gene *a* or the down-regulation of gene *b* alone.  
+The above describes the first step in both the algorithms. In this step, all the genes are considered as non-DEGs when the contingency table is constructed. After the gene states are assigned, we repeat the above steps to further filter potential DEGs. However, the counting to build the contingency tables does not include all stable pairs. Whether a stable pair, either concordant or reversal, is included depends on the dysregulation direction of the partner gene in the pair.  For a stable pair {*a*, *b*}, only if gene *b* is assigned as non-dysregulated gene, the pair is counted for the construction of the contingency table of gene *a*. (Initially, all the genes are assumed to be non-dysregulated, that is to say all the stable pairs will be used to construct the table in the initial cycle.)  After the contingency tables are renewed, Fisher exact test with FDR control are called for the null hypothesis test again. This iteration continues until the number of DEGs does not change significantly anymore.              
 
-The recounted values *g2l* and *l2g*, and the values of *n*<sub>g</sub> and *n*<sub>l</sub> from the first step, are used to construct the above contingency table. Fisher exact test is again used to identify the dysregulated genes.         
-
-
-### Dysregulated Genes, the RankCompV2 Algorithm
-Because of the low statistical power of the original RankComp algorithm, we further developed the RankCompV2 algorithm.  In the RankCompV2 algorithm, the first step as described above is repeated until the number of up or down-regulated genes no longer changes. In the first step, all the genes are assumed to be not dysregulated and the contingency table is constructed based on all the concordant and reversal pairs. In the later cycles, if one gene of a pair is determined to be dysregulated in the previous cycle, the gene will not be counted for the other gene of the pair.        
-
+### Dysregulated Genes, the original RankComp Algorithm
+In the original RankComp algorithm, the later iterations use a different strategy to renew the contingency tables. We redo the counting based on the reversal pairs only. For gene *a*, we count the number of genes whose expression level is greater than that of *a* in the normal group but becomes less than that of *a* in the disease group and the number of genes whose expression level is less than that of *a* in the normal group but becomes greater than that of *a* in the disease group. The numbers are labeled as *g2l* and *l2g*, respectively. For a reversal pair, *a* < *b* in the normal group and *a* > *b* in the disease group, if *a* is up-regulated, *a* will not be counted as *g2l* for *b* and if *b* is down-regulated, *b* is not counted as *l2g* for *a*. The recounted values *g2l* and *l2g*, and the values of *n*<sub>g</sub> and *n*<sub>l</sub> from the first step, are used to construct the above contingency tables. Fisher exact test is again used to identify the dysregulated genes.
 
 ## Usage
 The online help can be invoked by running the progrom with `-h` or `--help` option. 
@@ -74,7 +72,7 @@ See the folder `test` for test cases.
 ### Small-Scale Cell Line Data with Two or Three Technical Replicates
 For the small-scale cell line expriments with only a few (e.g. two or three) technical replicates, please use the program `cellcomp` to detect differentially expressed genes (DEGs). 
 
-Example. Note: the sample expression files are available under the `test` folder. 
+Example. (The sample expression files are available under the `test` folder.) 
 ```
 cellcomp cellcomp_control.dat cellcomp_case.dat
 ```
