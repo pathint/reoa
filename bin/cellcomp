@@ -1,0 +1,166 @@
+#!/bin/bash
+
+##############################
+# Xianlong Wang, Jan 17, 2017
+# Driver for REOA
+##############################
+
+# Defaults 
+# ALGORITHM, default RankCompV2
+ALGORITHM=0
+# FDR level, 5%
+FDR=0.05
+# CYCLES, maximum cycles for filtering
+CYCLES=128
+# THRESHOLD, convergence criterion
+THRESHOLD=50
+# VERBOSE output
+VERBOSE=NO
+
+pgm=reoa
+version="revison 0.1. 2017-01-17"
+if ! hash $pgm 2>/dev/null; then
+	echo The main executable "$pgm" is not found. Please check \$PATH
+	exit 1 
+fi
+
+function usage
+{
+	echo "NAME"
+	echo "     cellcomp, a bash script driver for application of $pgm" 
+	echo "     to small-scale data set with only a few technical replicates"
+	echo "SYNOPSIS"
+	echo "     cellcomp [-h|-V]"
+	echo "     cellcomp [OPTIONS] control_file case_file"
+	echo "DESCRIPTION"
+	echo "     CellComp (cellcomp) is a program to apply the RanComp and "
+	echo "     RankCompV2 algorithms to detect differentially expressed "
+	echo "     genes (DEGs) in small-scale cell line experiments. In such "
+	echo "     experiments, the gene expression profiles contain only two "
+	echo "     or three technical replicates and most conventional methods"
+	echo "     lack statistical power when applied to such small-scale data"
+	echo "     sets. The RankComp and RanCompV2 are based on the analysis of"
+	echo "     within-sample relative expression orderings (REOs) of gene pairs." 
+	echo "     See the references more details."
+	echo "OPTIONS"
+	echo "     -h, --help, --usage"
+	echo "       Show this message"
+	echo "     -V, --version"
+	echo "       Show program version"
+	echo "     -a, --algorithm = ALGORITHM"
+	echo "       Choice of algorithm. Default: 0"
+	echo "       0 - RankCompV2 only"
+	echo "       1 - Original RankComp only"
+	echo "       2 - Both RankComp and RankCompV2"
+	echo "     -f, --fdr = FDR"
+	echo "       False discovery rate (FDR) level. Default: 0.05"
+	echo "     -c, --cycles = CYCLES"
+	echo "       Maximum iteration cycles. Default: 128"
+	echo "     -t, --threshold = THRESHOLD"
+	echo "       Convergence criterion. Default: 50 "
+	echo "       (Maximum fluctuation in number of DEGs)"
+	echo "     -v, --verbose"
+	echo "       Output extra information"
+	echo
+}
+
+function eecho(){
+	echo "# $*"
+}
+
+function get_row(){
+	wc -l $1 |awk '{print $1}'
+}
+
+function get_col(){
+	head -1 $1 | wc -w
+}
+
+# Parsing options
+# WARNING: option value is not validated.
+# NOTE: This requires GNU getopt.
+OPTIONS=`getopt -o a:f:c:t:vhV --long algorithm:,fdr:,cycles:,threshold:,verbose,help,usage,version -n "$pgm" -- "$@"`
+eval set -- "$OPTIONS"
+
+#while [[ $# -gt 1 ]]
+while true;
+do
+  case "$1" in
+      -h|--help|--usage)
+      usage
+      exit 0
+      ;;
+      -V|--version)
+      echo $pgm $version
+      exit 0
+      ;;
+      -a|--algorithm)
+      ALGORITHM="$2"
+      shift 2 # past argument
+      ;;
+      -f|--fdr)
+      FDR="$2"
+      shift 2 # past argument
+      ;;
+      -c|--cycles)
+      CYCLES="$2"
+      shift 2 # past argument
+      ;;
+      -t|--threshold)
+      THRESHOLD="$2"
+      shift 2 # past argument
+      ;;
+      -v|--verbose)
+      VERBOSE=YES
+      shift
+      ;;
+      -- )
+      shift
+      break
+      ;;
+      *)
+      break
+      ;;
+  esac
+done
+
+if [ $# -lt 2 ]; then
+	usage
+        exit 1
+fi
+
+# check input files 
+file1=$1
+file2=$2
+
+if [ ! -r $file1 ]; then
+   echo "ERROR: input data file $file1 is not readable"
+   exit 1
+else
+   row1=`get_row $file1`
+   col1=`get_col $file1`
+fi
+
+if [ ! -r $file2 ]; then
+   echo "ERROR: input data file $file2 is not readable"
+   exit 1
+else
+   row2=`get_row $file2`
+   col2=`get_col $file2`
+fi
+
+if [[ $row1 -ne $row2 ]]; then
+    echo "ERROR: $file1 and $file2 do not have have the same number of rows."
+    echo "ERROR: please check or do preprocessing if necessary."
+fi
+
+if [[ $VERBOSE == YES ]]; then
+   cmd="$pgm -v -j 2 -s 0 -q 0 -a $ALGORITHM -f $FDR  --cycles $CYCLES --cycles_orig $CYCLES --convergence $THRESHOLD 2 $row1 $file1 $file2 $col1 $col2 0 0 "
+else
+   cmd="$pgm -j 2 -s 0 -q 0 -a $ALGORITHM -f $FDR  --cycles $CYCLES --cycles_orig $CYCLES --convergence $THRESHOLD 2 $row1 $file1 $file2 $col1 $col2 0 0 "
+fi
+echo $cmd
+# do the actual work
+eecho "Start at `date`"
+$cmd
+eecho "Finish at `date`"
