@@ -3,8 +3,10 @@ This program implements the original RankComp and the RankCompV2 algorithms to d
 
 Besides the main program, `reoa`, this package also includes several derivative programs which apply the method to specific scenarios. 
 
-1. CellComp
+1. *CellComp*
+
 The `cellcomp` program is applicable to small-scale cell-line data which include only a few (e.g. two or three) technical replicates.
+
 
 If you publish results from using this program, please cite the following paper.
 
