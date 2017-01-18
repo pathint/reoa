@@ -12,6 +12,7 @@ ifeq ($(OS),Windows_NT)
     endif
 else
     UNAME_S := $(shell uname -s)
+    prefix := /usr/local
     ifeq ($(UNAME_S),Linux)
         CCFLAGS += -D LINUX
         CC = gcc
@@ -40,7 +41,7 @@ endif
 LIBS = -lm -lgomp
 
 SRCS = pcg_basic.c stat.c binomial.c fisher.c hypergeom.c random_sample.c \
-       rgpa.c main.c
+       reoa.c main.c
 
 
 LFLAGS =
@@ -48,10 +49,10 @@ LFLAGS =
 OBJS = $(SRCS:.c=.o)
 
 TARGETS := fisher hypergeom binomial random_sample \
-           rgpa
+           reoa
 
 	
-.PHONY: depend clean
+.PHONY: depend clean install
 
 all: $(TARGETS)
 	@echo Building all executables
@@ -68,8 +69,14 @@ hypergeom: pcg_basic.o stat.o hypergeom.o
 random_sample: pcg_basic.o stat.o random_sample.o 
 	$(CC) $(LFLAGS) $(LIBS) -o $@ $^ 
 
-rgpa: pcg_basic.o stat.o rgpa.o main.o
+reoa: pcg_basic.o stat.o reoa.o main.o
 	$(CC) $(LFLAGS) $(LIBS) -o $@ $^ 
+
+install: reoa 
+	test -d $(prefix) || mkdir $(prefix)
+	test -d $(prefix)/bin || mkdir $(prefix)/bin
+	install -m 0755 reoa $(prefix)/bin
+	install -m 0755 cellcomp $(prefix)/bin
 
 # this is a suffix replacement rule for building .o's from .c's
 # it uses automatic variables $<: the name of the prerequisite of
