@@ -120,7 +120,7 @@ Detailed usage information for `cellcomp` is as follows.
 There are two possible ways to install the program.
 
 1. *Install from the Precompiled Execulables*.
-Just copy the binary file to the folder where the executables are located and rename it as `reoa`, such as `/usr/local/bin`. It is recommended to use `reoa_linux64_gomp4` which has the OpenMP 4.0 support.  See `README.md` under `bin` for further details.  
+Just copy the binary file to the folder where the executables are located, such as `/usr/local/bin`, and rename the binary file as `reoa`. It is recommended to use `reoa_linux64_gomp4` which has the OpenMP 4.0 support.  See `README.md` under `bin` for further details.  
 
 2. *Compile from the Source Files*. 
 Under the `src` folder, run `make` command to compile the sources and run `make install` to install the executables. The latter operation may require adminstation privilege (aka. `root`). (If `make install` does not work, just copy the compiled `reoa` file and other executables to `/usr/local/bin` or other executable folder). If the compilation does not finish successfully, you may need to change the settings in `Makefile` manually. See `README.md` under `src` for further details. 
