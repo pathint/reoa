@@ -3,8 +3,7 @@ This program implements the original RankComp and the RankCompV2 algorithms to d
 
 Besides the main program, `reoa`, this package also includes several derivative programs which apply the method to specific scenarios. 
 
-1. #CellComp#
-
+1. *CellComp*.
 The `cellcomp` program is applicable to small-scale cell-line data which include only a few (e.g. two or three) technical replicates.
 
 
@@ -69,6 +68,55 @@ For the small-scale samples, such as cell line technical replicates, exception n
 The default sample type is 'cohort'. For individual-type samples, the option `-s` (`--sample`) should be set as 1. Each sample (column) in a data set is analyzed separately.    
 
 See the folder `test` for test cases. 
+
+## Application Scenarios
+
+### Small-Scale Cell Line Data with Two or Three Technical Replicates
+For the small-scale cell line expriments with only a few (e.g. two or three) technical replicates, please use the program `cellcomp` to detect differentially expressed genes (DEGs). 
+
+Example. Note: the sample expression files are available under the `test` folder. 
+```
+cellcomp cellcomp_control.dat cellcomp_case.dat
+```
+Detailed usage information for `cellcomp` is as follows. 
+
+#### NAME
+     cellcomp, a bash script driver for application of reoa
+     to small-scale data set with only a few technical replicates
+#### SYNOPSIS
+     cellcomp [-h|-V]
+     cellcomp [OPTIONS] control_file case_file
+#### DESCRIPTION
+     CellComp (cellcomp) is a program to apply the RanComp and 
+     RankCompV2 algorithms to detect differentially expressed 
+     genes (DEGs) in small-scale cell line experiments. In such 
+     experiments, the gene expression profiles contain only two 
+     or three technical replicates and most conventional methods
+     lack statistical power when applied to such small-scale data
+     sets. The RankComp and RanCompV2 are based on the analysis of
+     within-sample relative expression orderings (REOs) of gene pairs.
+     See the references more details.
+#### OPTIONS
+     -h, --help, --usage
+       Show this message
+     -V, --version
+       Show program version
+     -a, --algorithm = ALGORITHM
+       Choice of algorithm. Default: 0
+       0 - RankCompV2 only
+       1 - Original RankComp only
+       2 - Both RankComp and RankCompV2
+     -f, --fdr = FDR
+       False discovery rate (FDR) level. Default: 0.05
+     -c, --cycles = CYCLES
+       Maximum iteration cycles. Default: 128
+     -t, --threshold = THRESHOLD
+       Convergence criterion. Default: 50 
+       (Maximum fluctuation in number of DEGs)
+     -v, --verbose
+       Output extra information
+
+
 
 ## Install 
 There are two possible ways to install the program.
