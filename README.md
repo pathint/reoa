@@ -1,6 +1,11 @@
 # Relative Expression Ordering Analysis (REOA) package
 This program implements the original RankComp and the RankCompV2 algorithms to detect the dysregulated genes. It is applicable to gene expression, methylation and other gene microarray data sets. Both large-scale cohort and individual samples or small-scale cell-line samples with two or three technical replicates can be analyzed. 
 
+Besides the main program, `reoa`, this package also includes several derivative programs which apply the method to specific scenarios. 
+
+1. CellComp
+The `cellcomp` program is applicable to small-scale cell-line data which include only a few (e.g. two or three) technical replicates.
+
 If you publish results from using this program, please cite the following paper.
 
 Hongwei Wang, Qiang Sun, Wenyuan Zhao, Lishuang Qi, Yunyan Gu, Pengfei Li, Mengmeng Zhang, Yang Li, Shu-Lin Liu, and Zheng Guo. (**2015**). Individual-level analysis of differential expression of genes and pathways for personalized medicine. *Bioinformatics*. 31(1):62-8. [DOI:10.1093/bioinformatics/btu522](http://dx.doi.org/10.1093/bioinformatics/btu522).
@@ -41,11 +46,11 @@ Because of the low statistical power of the original RankComp algorithm, we furt
 ## Usage
 The online help can be invoked by running the progrom with `-h` or `--help` option. 
 ```
-rgpa -h
+reoa -h
 ```
 or
 ```
-rgpa --help
+reoa --help
 ```
 The input data sets should be given as text-based data matrix data files. One file contains the microarray value matrix of one group of samples. The number of rows corresponds to the total number of gene probes and the number of rows corresponds to the sample size.  The values should be tab or space delimited. If multiple data sets are given as input, the number of genes should be the same. 
 
@@ -67,10 +72,10 @@ See the folder `test` for test cases.
 There are two possible ways to install the program.
 
 1. *Install from the Precompiled Execulables*.
-Just copy the binary file to the folder where the executables are located, such as `/usr/local/bin`. It is recommended to use `rgpa_linux64_gomp4` which has the OpenMP 4.0 support.  See `README.md` under `bin` for further details.  
+Just copy the binary file to the folder where the executables are located and rename it as `reoa`, such as `/usr/local/bin`. It is recommended to use `reoa_linux64_gomp4` which has the OpenMP 4.0 support.  See `README.md` under `bin` for further details.  
 
 2. *Compile from the Source Files*. 
-Under the `src` folder, run `make` command. Then copy the compiled `rgpa` to `/usr/local/bin` or other executable folder. If the compilation does not finish successfully, you may need to change the settings in `Makefile` manually. See `README.md` under `src` for further details. 
+Under the `src` folder, run `make` command to compile the sources and run `make install` to install the executables. The latter operation may require adminstation privilege (aka. `root`). (If `make install` does not work, just copy the compiled `reoa` file and other executables to `/usr/local/bin` or other executable folder). If the compilation does not finish successfully, you may need to change the settings in `Makefile` manually. See `README.md` under `src` for further details. 
 
 ## License 
 This program is free software; it is released under the GNU GENERAL PUBLIC LICENSE Version 3. 
@@ -78,5 +83,4 @@ This program is free software; it is released under the GNU GENERAL PUBLIC LICEN
 ## Contact Us
 
 If you would like to receive updates from us regarding bug fixes, patches, feature updates or if you would like to contact us, please write to [1353023@qq.com](1353023@qq.com) or contact us via QQ or WeChat: 1353023.
-
 
