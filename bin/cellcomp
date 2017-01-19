@@ -155,9 +155,9 @@ if [[ $row1 -ne $row2 ]]; then
 fi
 
 if [[ $VERBOSE == YES ]]; then
-   cmd="$pgm -v -j 2 -s 0 -q 0 -a $ALGORITHM -f $FDR  --cycles $CYCLES --cycles_orig $CYCLES --convergence $THRESHOLD 2 $row1 $file1 $file2 $col1 $col2 0 0 "
+   cmd="$pgm -v -j 2 -s 0 -q 0 -a $ALGORITHM -f $FDR  --cycles $CYCLES --cycles_orig 2 --convergence $THRESHOLD 2 $row1 $file1 $file2 $col1 $col2 0 0 "
 else
-   cmd="$pgm -j 2 -s 0 -q 0 -a $ALGORITHM -f $FDR  --cycles $CYCLES --cycles_orig $CYCLES --convergence $THRESHOLD 2 $row1 $file1 $file2 $col1 $col2 0 0 "
+   cmd="$pgm -j 2 -s 0 -q 0 -a $ALGORITHM -f $FDR  --cycles $CYCLES --cycles_orig 2 --convergence $THRESHOLD 2 $row1 $file1 $file2 $col1 $col2 0 0 "
 fi
 echo $cmd
 # do the actual work
