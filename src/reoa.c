@@ -1,4 +1,7 @@
 /**************************************************************************
+ *  FSRP: Fast Stably Ranked Pair
+ *        identify the stably ranked pairs given a matrix of size n*m,
+ *        where n is the gene number and m is the sample size.
  *
  *  Xianlong Wang, Ph.D.
  *  University of Electronic Science and Technology of China.
@@ -7,6 +10,9 @@
  *  Initialization. Oct. 25, 2016.
  *  Revised on Nov.  8, 2016.
  *  Revised on Nov. 28, 2016.
+ *  Revised on Feb. 10, 2017. 
+ *   add: application scenario to technical replicates
+ *        control to filter stable pairs
  **************************************************************************/
 
 #include "reoa.h"
@@ -602,6 +608,185 @@ int filter_gene_dirs(DATATYPE_GENESIZE n, //number of genes
   return EXIT_SUCCESS;
 }//end filter_gene_dirs
 
+/*******************************
+ * Modify of filter_gene_dirs for one sample only
+ * 1) serial mode only;
+ * 2) filter background gene pairs each iteration avoding the creation of the new filtered pairs
+ * 3) RankComp V2.0 algorithum
+ *******************************/
+int filter_deg_one(DATATYPE_GENESIZE np, //number of gene pairs
+		  struct pair0 pairs[np],
+		  DATATYPE_GENESIZE ng,
+		  int size,
+		  DATATYPE_VALUE control[ng*size],
+		  DATATYPE_VALUE treated[ng],
+		  struct gene_state *states[ng],
+		  double alpha, //FDR alpha level for regulation direction
+		  int max_cycles,
+		  int conv_threshold
+	          )
+{
+  unsigned int i;
+
+  /* loop over all predetermined pairs */
+  for(i=0; i<np; i++)
+  {
+    int h, l;
+    h = pairs[i].h;
+    l = pairs[i].l;
+    int j, count0 = 0;
+    for (j=0; j<size; j++)
+	    count0 += less(control[l*size + j], control[h*size + j]); //row: l or h, col: j
+    //if(h<ng && l<ng && less(control[l], control[h]) == 1)
+    if(h<ng && l<ng && count0 == size)
+    {
+       if (less(treated[l], treated[h]) == 1)
+       {//concordant pair
+         STATE_INC(h, 0, 1, 0, 0)
+         STATE_INC(l, 1, 0, 0, 0)
+         STATE_INC(h, 0, 0, 0, 1)
+         STATE_INC(l, 0, 0, 1, 0)
+       }
+       else if (less(treated[h], treated[l]) == 1)
+       {//reversed pair
+         STATE_INC(h, 0, 1, 0, 0)
+         STATE_INC(l, 1, 0, 0, 0)
+         STATE_INC(h, 0, 0, 1, 0)
+         STATE_INC(l, 0, 0, 0, 1)
+       }
+    }//end if
+  }//end for
+
+  /* screening DEGs using the two-tailed hypergeometric test */
+  int cycles = 0;
+  double *pvalues;
+  double p_upper;
+  int  gene_up=BIGNINT, gene_down=BIGNINT, gene_flat=BIGNINT;
+  int  gene_up_pre, gene_down_pre, gene_flat_pre;
+
+  do {
+    int count = 0;
+    //two-tailed hypergeometric test
+    for(i=0; i<ng; i++)
+      if(states[i]!=NULL) 
+      {
+         states[i]->p = fisher_test( (int) states[i]->ng, (int) states[i]->nl,
+        			     (int) states[i]->cg, (int) states[i]->cl);
+        count += 1;
+      } //end if
+
+    // copy p values to pvalues
+    fprintf(stdout, "#  Cycle %d, %d genes have been tested using the Fisher exact test (aka. two-tail hypergeometric test).\n", cycles, count);
+ 
+    pvalues = malloc(sizeof(double)*count);
+    count = 0;
+    for(i=0; i<ng; i++)
+      if(states[i]!=NULL)
+          pvalues[count++] = states[i]->p;
+ 
+    //FDR control
+    p_upper = bh_threshold(count, pvalues, alpha);
+    fprintf(stdout, "#  FDR = %f controlled P value threshold, %.17g. \n", alpha, p_upper);
+    free(pvalues);
+
+    //assign states
+    gene_up_pre   = gene_up;
+    gene_down_pre = gene_down;
+    gene_flat_pre = gene_flat;
+    gene_up   = 0;
+    gene_down = 0;
+    gene_flat = 0;
+    for(i=0; i<ng; i++)
+      if(states[i]!=NULL) {
+        if((states[i]->p)<p_upper){ //in case group, g/l ratio is higher, i is down-regulated.
+           if(((states[i]->ng+1.0e-5)/(states[i]->nl+1.0e-5)) <
+              ((states[i]->cg+1.0e-5)/(states[i]->cl+1.0e-5))) 
+	   {
+             states[i]->state = 1;
+             gene_down += 1;
+           }
+           else {
+             states[i]->state = 2;
+             gene_up += 1;
+           }
+        } 
+        else {
+          states[i]->state = 0;
+          gene_flat += 1;
+        }
+      } //end if for
+    fprintf(stdout, "#  %d genes have been tested as up-regulated.\n", gene_up);
+    fprintf(stdout, "#  %d genes have been tested as down-regulated.\n", gene_down);
+    fprintf(stdout, "#  %d genes have no particular direction.\n", gene_flat);
+ 
+    //count ng, nl, cg and cl, if gene_state is 0 (flat).
+    //clear first
+    for(i=0; i<ng; i++)
+      if(states[i]!=NULL) {
+        states[i]->ng = 0;
+        states[i]->nl = 0;
+        states[i]->cg = 0;
+        states[i]->cl = 0;
+      }
+
+    /* new iteration */
+    /* loop over all predetermined pairs */
+    for(i=0; i<np; i++)
+    {
+      int h, l;
+      h = pairs[i].h;
+      l = pairs[i].l;
+      int j, count0 = 0;
+      for (j=0; j<size; j++)
+              count0 += less(control[l*size + j], control[h*size + j]); //row: l or h, col: j
+      //if(h<ng && l<ng && less(control[l], control[h]) == 1)
+      if(h<ng && l<ng && count0 == size)
+      {
+         if (less(treated[l], treated[h]) == 1)
+         {//concordant pair
+	    if (states[l]->state==0) 
+	    {
+	      states[h]->nl += 1;
+	      states[h]->cl += 1;
+	    }
+	    if (states[h]->state==0) 
+	    {
+	       states[l]->ng += 1;
+	       states[l]->cg += 1;
+	    }
+         }
+         else if (less(treated[h], treated[l]) == 1)
+         {//reversed pair
+	    if (states[l]->state==0) 
+	    {
+	      states[h]->nl += 1;
+	      states[h]->cg += 1;
+	    }
+	    if (states[h]->state==0) 
+	    {
+	       states[l]->ng += 1;
+	       states[l]->cl += 1;
+	    }
+         }
+      }//end if
+    }//end for
+ 
+    cycles +=1;
+   } while(cycles<max_cycles && (abs(gene_flat-gene_flat_pre)>conv_threshold||  \
+			         abs(gene_up-gene_up_pre)    >conv_threshold||  \
+			         abs(gene_down-gene_down_pre)>conv_threshold)); 
+
+
+  if(abs(gene_flat-gene_flat_pre)<=conv_threshold &&  
+     abs(gene_up-gene_up_pre)    <=conv_threshold &&    
+     abs(gene_down-gene_down_pre)<=conv_threshold)
+    fprintf(stdout, "#  Convergence has been reached after %d cycles.\n", cycles);
+  else 
+    fprintf(stdout, "#  Max cycles  %d have been exceeded before the convergence.\n", max_cycles);
+
+  return EXIT_SUCCESS;
+}//end filter_deg_one
+
 
 /****************************************************************************
  * Filter dys-regulated genes, judge directions, RanComp original 
@@ -803,6 +988,162 @@ int filter_gene_orig(DATATYPE_GENESIZE n, //number of genes
 
   return EXIT_SUCCESS;
 }// end filter_gene_orig
+
+
+/* Modified filter_deg_one function: Original RankComp Algo. */
+int filter_deg_one_orig(DATATYPE_GENESIZE np, //number of gene pairs
+		  struct pair0 pairs[np],
+		  DATATYPE_GENESIZE ng,
+		  int size,
+		  DATATYPE_VALUE control[ng*size],
+		  DATATYPE_VALUE treated[ng],
+		  struct gene_state2 *states[ng],
+		  double alpha, //FDR alpha level for regulation direction
+		  int max_cycles,
+		  int conv_threshold
+	          )
+{
+  unsigned int i;
+
+  /* loop over all predetermined pairs */
+  for(i=0; i<np; i++)
+  {
+    int h, l;
+    h = pairs[i].h;
+    l = pairs[i].l;
+    int j, count0 = 0;
+    for (j=0; j<size; j++)
+	    count0 += less(control[l*size + j], control[h*size + j]); //row: l or h, col: j
+    //if(h<ng && l<ng && less(control[l], control[h]) == 1)
+    if(h<ng && l<ng && count0 == size)
+    {
+       if (less(treated[l], treated[h]) == 1)
+       {//concordant pair
+	 STATE_IN2(h, nl, l, ng)
+       }
+       else if (less(treated[h], treated[l]) == 1)
+       {//reversed pair, h > l --> h < l
+	 STATE_IN2(h, nl,  l, ng)
+	 STATE_IN2(l, g2l, h, l2g)
+       }
+    }//end if
+  }//end for
+
+  /* screening DEGs using the two-tailed hypergeometric test */
+  int cycles = 0;
+  double *pvalues;
+  double p_upper;
+  int  gene_up=BIGNINT, gene_down=BIGNINT, gene_flat=BIGNINT;
+  int  gene_up_pre, gene_down_pre, gene_flat_pre;
+
+  do {
+    int count = 0;
+    //two-tailed hypergeometric test
+    for(i=0; i<ng; i++)
+      if(states[i]!=NULL) 
+      {
+         states[i]->p =fisher_test((int) states[i]->ng, (int) states[i]->nl,
+        			   (int) states[i]->ng + states[i]->l2g - states[i]->g2l, 
+        			   (int) states[i]->nl - states[i]->l2g + states[i]->g2l
+        			   );
+        count += 1;
+      } //end if
+
+    // copy p values to pvalues
+    fprintf(stdout, "#  Cycle %d, %d genes have been tested using the Fisher exact test (aka. two-tail hypergeometric test).\n", cycles, count);
+ 
+    pvalues = malloc(sizeof(double)*count);
+    count = 0;
+    for(i=0; i<ng; i++)
+      if(states[i]!=NULL)
+          pvalues[count++] = states[i]->p;
+ 
+    //FDR control
+    p_upper = bh_threshold(count, pvalues, alpha);
+    fprintf(stdout, "#  FDR = %f controlled P value threshold, %.17g. \n", alpha, p_upper);
+    free(pvalues);
+
+    //assign states
+    gene_up_pre   = gene_up;
+    gene_down_pre = gene_down;
+    gene_flat_pre = gene_flat;
+    gene_up   = 0;
+    gene_down = 0;
+    gene_flat = 0;
+    for(i=0; i<ng; i++)
+      if(states[i]!=NULL) {
+        if((states[i]->p)<p_upper){ //in case group, g/l ratio is higher, i is down-regulated.
+	   double a, b, c, d;
+	   a = (double) states[i]->ng;
+	   b = (double) states[i]->nl;
+	   c = (double) states[i]->ng + states[i]->l2g - states[i]->g2l;
+	   d = (double) states[i]->nl - states[i]->l2g + states[i]->g2l;
+
+           if(((a+1.0e-5)/(b+1.0e-5)) < ((c+1.0e-5)/(d +1.0e-5))) {
+             states[i]->state = 1;
+             gene_down += 1;
+           }
+           else {
+             states[i]->state = 2;
+             gene_up += 1;
+           }
+        } 
+        else {
+          states[i]->state = 0;
+          gene_flat += 1;
+        }
+      } //end if for
+    fprintf(stdout, "#  %d genes have been tested as up-regulated.\n", gene_up);
+    fprintf(stdout, "#  %d genes have been tested as down-regulated.\n", gene_down);
+    fprintf(stdout, "#  %d genes have no particular direction.\n", gene_flat);
+ 
+    //count ng, nl, cg and cl, if gene_state is 0 (flat).
+    //clear first
+    for(i=0; i<ng; i++)
+      if(states[i]!=NULL) {
+        states[i]->g2l = 0;
+        states[i]->l2g = 0;
+      }
+
+    /* new iteration */
+    /* loop over all predetermined pairs */
+    for(i=0; i<np; i++)
+    {
+      int h, l;
+      h = pairs[i].h;
+      l = pairs[i].l;
+      int j, count0 = 0;
+      for (j=0; j<size; j++)
+              count0 += less(control[l*size + j], control[h*size + j]); //row: l or h, col: j
+      //if(h<ng && l<ng && less(control[l], control[h]) == 1 && less(treated[h], treated[l]) == 1)
+      if(h<ng && l<ng && count0 == size && less(treated[h], treated[l]) == 1)
+      {
+	 // l < h --> h > l
+         //reversed pair
+	 if (states[l]->state != 2) 
+	   states[h]->l2g += 1;
+
+	 if (states[h]->state !=1) 
+	    states[l]->g2l += 1;
+         
+      }//end if
+    }//end for
+ 
+    cycles +=1;
+   } while(cycles<max_cycles && (abs(gene_flat-gene_flat_pre)>conv_threshold||  \
+			         abs(gene_up-gene_up_pre)    >conv_threshold||  \
+			         abs(gene_down-gene_down_pre)>conv_threshold)); 
+
+
+  if(abs(gene_flat-gene_flat_pre)<=conv_threshold &&  
+     abs(gene_up-gene_up_pre)    <=conv_threshold &&    
+     abs(gene_down-gene_down_pre)<=conv_threshold)
+    fprintf(stdout, "#  Convergence has been reached after %d cycles.\n", cycles);
+  else 
+    fprintf(stdout, "#  Max cycles  %d have been exceeded before the convergence.\n", max_cycles);
+
+  return EXIT_SUCCESS;
+}//end filter_deg_one
 
 
 #define STATE_IN3(i, cgv, clv, g2lv, l2gv)     		                     	\

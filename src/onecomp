@@ -1,0 +1,215 @@
+#!/bin/bash
+
+##############################
+# Xianlong Wang, Feb. 14, 2017
+# Driver for REOA: OneComp
+##############################
+
+# Defaults 
+# ALGORITHM, default RankCompV2
+ALGORITHM=0
+#MODE, default paired contro-treat sample
+MODE=0
+# FDR level, 5%
+FDR=0.05
+# CYCLES, maximum cycles for filtering
+CYCLES=128
+# CYCLES_ORIG, maximum cycles for filtering
+# original RankComp algo.
+CYCLES_ORIG=2
+# THRESHOLD, convergence criterion
+THRESHOLD=50
+# VERBOSE output
+VERBOSE=NO
+
+pgm=reoa
+version="revison 0.1 2017-02-14"
+if ! hash $pgm 2>/dev/null; then
+	echo The main executable "$pgm" is not found. Please check \$PATH
+	exit 1 
+fi
+
+function usage
+{
+	echo "NAME"
+	echo "     onecomp, a bash script driver for application of $pgm" 
+	echo "     to detect dysregulated genes in one treated sample"
+	echo "     given a list of stable gene pairs and one paired control"
+	echo "     sample."
+	echo "SYNOPSIS"
+	echo "     onecomp [-h|-V]"
+	echo "     onecomp [OPTIONS] pair_file control_file treated_file"
+	echo "DESCRIPTION"
+	echo "     OneComp (onecomp) is a program to apply the original RankComp "
+	echo "     and RankCompV2 algorithms to detect differentially expressed "
+	echo "     genes (DEGs) in one treated sample given the paired control "
+	echo "     sample and a list of predetermined gene pairs with stable REOs." 
+	echo "     The control sample is used to customize the gene pair list"
+	echo "     and 'paired' here does not necessarily mean the expermental"
+	echo "     design but a compatiable corresponding relation between the two."
+	echo "     The 'control_file' and 'treated_file contains the expression"
+	echo "     profiles of a group of control samples and a group of treated"
+	echo "     samples. They should have the same number of rows (gene probes) "
+	echo "     and the same number of columns (number of samples). The i-th"
+	echo "     column of 'control_file' and the i-th column of 'treated_file' "
+	echo "     constitue one paired sample and they are processed by the algo."
+	echo "     independent of the other columns."
+	echo "     The pair_file contains the list of predetermined gene pairs which"
+	echo "     are given by the gene probe indices (0-based) which have the same"
+	echo "     order as the expression files (control_file or treated_file)."
+	echo "     The RankComp and RanCompV2 are based on the analysis of"
+	echo "     within-sample relative expression orderings (REOs) of gene pairs." 
+	echo "     See the references more details."
+	echo "OPTIONS"
+	echo "     -h, --help, --usage"
+	echo "       Show this message"
+	echo "     -V, --version"
+	echo "       Show program version"
+	echo "     -a, --algorithm = VALUE"
+	echo "       Choice of algorithm. Default: 0"
+	echo "       0 - RankCompV2 only"
+	echo "       1 - Original RankComp only"
+	echo "       2 - Both RankComp and RankCompV2"
+	echo "     -m, --mode = VALUE"
+	echo "       Choice of filter mode. Default: 0"
+	echo "       0 - Use one control sample to filter the pairs to detect DEGs"
+	echo "           in the corresponding treated sample"
+	echo "       1 - Use all the control samples to filter the pairs to detect"
+	echo "           DEGs in each treated samples"
+	echo "     -f, --fdr = FDR"
+	echo "       False discovery rate (FDR) level. Default: 0.05"
+	echo "     -c, --cycles = CYCLES"
+	echo "       Maximum iteration cycles. Default: 128"
+	echo "     -t, --threshold = THRESHOLD"
+	echo "       Convergence criterion. Default: 50 "
+	echo "       (Maximum fluctuation in number of DEGs)"
+	echo "     -v, --verbose"
+	echo "       Output extra information"
+	echo
+}
+
+function eecho(){
+	echo "# $*"
+}
+
+function get_row(){
+	wc -l $1 |awk '{print $1}'
+}
+
+function get_col(){
+	head -1 $1 | wc -w
+}
+
+# Parsing options
+# WARNING: option value is not validated.
+# NOTE: This requires GNU getopt.
+OPTIONS=`getopt -o a:f:c:t:m:vhV --long algorithm:,fdr:,cycles:,threshold:,mode:,verbose,help,usage,version -n "$pgm" -- "$@"`
+eval set -- "$OPTIONS"
+
+#while [[ $# -gt 1 ]]
+while true;
+do
+  case "$1" in
+      -h|--help|--usage)
+      usage
+      exit 0
+      ;;
+      -V|--version)
+      echo $pgm $version
+      exit 0
+      ;;
+      -a|--algorithm)
+      ALGORITHM="$2"
+      shift 2 # past argument
+      ;;
+      -f|--fdr)
+      FDR="$2"
+      shift 2 # past argument
+      ;;
+      -c|--cycles)
+      CYCLES="$2"
+      shift 2 # past argument
+      ;;
+      -t|--threshold)
+      THRESHOLD="$2"
+      shift 2 # past argument
+      ;;
+      -m|--mode)
+      MODE="$2"
+      shift 2 # past argument
+      ;;
+      -v|--verbose)
+      VERBOSE=YES
+      shift
+      ;;
+      -- )
+      shift
+      break
+      ;;
+      *)
+      break
+      ;;
+  esac
+done
+
+if [ $# -lt 3 ]; then
+	usage
+        exit 1
+fi
+
+# check input files 
+file1=$1
+file2=$2
+file3=$3
+
+if [ ! -r $file1 ]; then
+   echo "ERROR: input data file $file1 is not readable"
+   exit 1
+else
+   row1=`get_row $file1`
+   col1=`get_col $file1`
+fi
+
+if [ ! -r $file2 ]; then
+   echo "ERROR: input data file $file2 is not readable"
+   exit 1
+else
+   row2=`get_row $file2`
+   col2=`get_col $file2`
+fi
+
+if [ ! -r $file3 ]; then
+   echo "ERROR: input data file $file3 is not readable"
+   exit 1
+else
+   row3=`get_row $file3`
+   col3=`get_col $file3`
+fi
+
+if [[ $row2 -ne $row3 ]]; then
+    echo "ERROR: $file2 and $file3 do not have have the same number of rows."
+    echo "ERROR: please check or do preprocessing if necessary."
+    exit 1
+fi
+
+if [[ $col1 -ne 2 ]]; then
+    echo "WARNING: $file1 does not seem a list of gene pairs."
+    echo "WARNING: Please check or do preprocessing if necessary."
+fi
+
+if [[ $col2 -ne $col3 ]]; then
+    echo "WARNING: $file2 and $file3 do not have have the same number of column."
+    echo "WARNING: Only the first few common columns will be processed."
+    echo "WARNING: Please check or do preprocessing if necessary."
+fi
+
+if [[ $VERBOSE == YES ]]; then
+   cmd="$pgm -v -j 7 -l $row1 -c $file1 -a $ALGORITHM -p $MODE -f $FDR --cycles $CYCLES --cycles_orig $CYCLES_ORIG --convergence $THRESHOLD 2 $row2 $file2 $file3 $col2 $col3"
+else
+   cmd="$pgm    -j 7 -l $row1 -c $file1 -a $ALGORITHM -p $MODE -f $FDR --cycles $CYCLES --cycles_orig $CYCLES_ORIG --convergence $THRESHOLD 2 $row2 $file2 $file3 $col2 $col3"
+fi
+echo $cmd
+# do the actual work
+eecho "Start at `date`"
+$cmd
+eecho "Finish at `date`"

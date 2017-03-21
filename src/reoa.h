@@ -7,7 +7,7 @@
 #include "stat.h"
 
 #define DATATYPE_VALUE float
-#define DATATYPE_SAMPLESIZE unsigned int
+#define DATATYPE_SAMPLESIZE int
 #define DATATYPE_GENESIZE unsigned int
 #define CONV_THRESHOLD 50
 #define MEMBLOCK 1024
@@ -17,6 +17,11 @@
 #define MAX_FILES  255
 #define MAX_SAMPLESIZE 255
 #define DEFAULT_FDR 0.05
+
+//plain pair
+struct pair0 {
+  DATATYPE_GENESIZE h, l;
+};
 
 //for one sample only
 struct pair {
@@ -52,7 +57,6 @@ struct gene_state2 {
    DATATYPE_GENESIZE l2g; // similar as above, but in the reversed order
    double p; //hyergeometric test value
 };
-
 
 /* for Bayesian  */
 struct gene_state3 {
@@ -178,6 +182,32 @@ int filter_gene_bayesian(DATATYPE_GENESIZE n, //number of genes
 		     int max_cycles,
 		     int conv_threshold*/
 	            );
+
+
+int filter_deg_one(DATATYPE_GENESIZE np, //number of gene pairs
+		  struct pair0 pairs[np],
+		  DATATYPE_GENESIZE ng,
+		  int size,
+		  DATATYPE_VALUE control[ng*size],
+		  DATATYPE_VALUE treated[ng],
+		  struct gene_state *states[ng],
+		  double alpha, //FDR alpha level for regulation direction
+		  int max_cycles,
+		  int conv_threshold
+	          );
+
+/* Modified filter_deg_one function: Original RankComp Algo. */
+int filter_deg_one_orig(DATATYPE_GENESIZE np, //number of gene pairs
+		  struct pair0 pairs[np],
+		  DATATYPE_GENESIZE ng,
+		  int size,
+		  DATATYPE_VALUE control[ng*size],
+		  DATATYPE_VALUE treated[ng],
+		  struct gene_state2 *states[ng],
+		  double alpha, //FDR alpha level for regulation direction
+		  int max_cycles,
+		  int conv_threshold
+	          );
 
 int  gen_random_sample( DATATYPE_GENESIZE n, //number of genes
 	      		DATATYPE_SAMPLESIZE m, //sample size 
