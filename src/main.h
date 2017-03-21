@@ -6,6 +6,8 @@
 #define REVERSED    "reversed_pairs_"
 #define UP	    "up_regulated_"
 #define DOWN	    "down_regulated_"
+#define UP_ORIG	    "up_orig_algo_"
+#define DOWN_ORIG   "down_orig_algo_"
 #define GENE_STATE  "gene_state_"
 #define SIMULATION  "simulation_"
 #define SIMILARITY  "similarity_"
@@ -24,8 +26,10 @@ static struct option long_options[] =
     {"sample",  required_argument, NULL, 's'},
     {"job",     required_argument, NULL, 'j'},
     {"pair",    required_argument, NULL, 'p'},
+    {"platform",required_argument, NULL, 'P'},
     {"changes", required_argument, NULL, 'c'},
     {"lines",   required_argument, NULL, 'l'},
+    {"plines",  required_argument, NULL, 'L'},
     {"time",    required_argument, NULL, 't'},
     {"algorithm",required_argument,NULL, 'a'},
     {"cycles",  required_argument, NULL, 'm'},
@@ -35,7 +39,7 @@ static struct option long_options[] =
     {NULL, 	no_argument, 	   NULL, 0}
   };
 
-static const char *opt_string = "e:q:f:s:j:p:c:l:t:a:m:n:M:vVh?";
+static const char *opt_string = "e:q:f:s:j:p:P:c:l:L:t:a:m:o:n:M:vVh?";
 
 float MEMORY_USAGE = -1.;
 
