@@ -7,7 +7,7 @@ Besides the main program, `reoa`, this package also includes several derivative 
 The `cellcomp` program is applicable to small-scale cell-line data which include only a few (e.g. two or three) technical replicates. See [below](https://github.com/pathint/reoa#small-scale-cell-line-data-with-two-or-three-technical-replicates) for usage.
 
 2. *OneComp*.
-The `onecomp` program is applicable to the datasets with only one case sample and possibly one control sample. See [below](https://github.com/pathint/reoa#small-scale-cell-line-data-with-two-or-three-technical-replicates) for usage.
+The `onecomp` program is applicable to the datasets with only one case sample and possibly one control sample. See [below](https://github.com/pathint/reoa/blob/master/README.md#datasets-with-only-one-control-sample-and-one-case-sample) for usage.
 
 
 If you publish results from using this program, please cite the following paper.
