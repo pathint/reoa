@@ -511,6 +511,8 @@ int select_consistent_pairs(int           n_files,
      /* loop over the rest of the data files */
      for (i2=begin2; i2<n_files; i2 += step2)
      {
+	int max1_local;
+	max1_local = max1;
         if (VERBOSE) fprintf(stdout, "#Processing data file %d...\n", i2);
         /* load data2 into memory */
         int             size2 = sample_sizes[i2];
@@ -558,7 +560,7 @@ int select_consistent_pairs(int           n_files,
         exceptions2 = malloc( sizeof(int *) * n_threads); 
         count_pairs = malloc( sizeof(int *) * n_threads); 
 
-	stable_pairs_two(n_genes, size1, data1, max1, size2, data2, max2, max_equals,
+	stable_pairs_two(n_genes, size1, data1, max1_local, size2, data2, max2, max_equals,
 		         n_threads, pairs, count_pairs, exceptions1, exceptions2);
 
         struct FDR result1, result2;
@@ -570,21 +572,21 @@ int select_consistent_pairs(int           n_files,
           /* FDR control mode*/
           if (mode1==0)
           {
-            result1 = bh_ctrl(size1, max1, exceptions1[0], n_genes*(n_genes-1)/2 ,fdr1);
-               max1 = result1.index;
+            result1 = bh_ctrl(size1, max1_local, exceptions1[0], n_genes*(n_genes-1)/2 ,fdr1);
+            max1_local = result1.index;
           }
           else
           {
-            result1  = bh_eval(size1, max1, exceptions1[0], n_genes*(n_genes-1)/2);
+            result1  = bh_eval(size1, max1_local, exceptions1[0], n_genes*(n_genes-1)/2);
            result1.p =  bino_p(size1, result1.index);
           }
           /* print ouf statistics */
           fprintf(stdout, "# Data Set %d - Significantly Stable Gene Pairs \n", i1);
           fprintf(stdout, "#  FDR control level or max exception numbers: %g\n", fdr1);
           fprintf(stdout, "#  FDR actual level: %g\n", result1.value);
-          fprintf(stdout, "#  Max. exception numbers: %d\n", max1);
+          fprintf(stdout, "#  Max. exception numbers: %d\n", max1_local);
           fprintf(stdout, "#  Max. binomial test P value: %g\n", result1.p);
-          for(j=0; j<=max1; j++)
+          for(j=0; j<=max1_local; j++)
              fprintf(stdout, "#  Number of pairs with %d exceptions: %d\n", j, exceptions1[0][j]);
 
 	  /* open file to write stable pairs */
@@ -674,8 +676,8 @@ int select_consistent_pairs(int           n_files,
 	     unsigned char ce = ((unsigned char)(current >>5)) & 0b00000001;;
 	     unsigned char c1 = (unsigned char)(current >> 6); 
 	     unsigned char c2 = (unsigned char)(current >> 14); 
-             state =          ((      c1<=max1 && ne == 1)?1:0);
-             state = state | (((size1-c1<=max1 && ne == 1)?1:0)<<1);
+             state =          ((      c1<=max1_local && ne == 1)?1:0);
+             state = state | (((size1-c1<=max1_local && ne == 1)?1:0)<<1);
              state = state | (((      c2<=max2 && ce == 1)?1:0)<<2);
              state = state | (((size2-c2<=max2 && ce == 1)?1:0)<<3);
 
@@ -1843,6 +1845,8 @@ int select_genes_bayesian(int           n_files,
      /* loop over the rest of the data files */
      for (i2=begin2; i2<n_files; i2 += step2)
      {
+	int max1_local;
+	max1_local = max1;
         if (VERBOSE) fprintf(stdout, "#Processing data file %d...\n", i2);
         /* load data2 into memory */
         int             size2 = sample_sizes[i2];
@@ -1890,7 +1894,7 @@ int select_genes_bayesian(int           n_files,
         exceptions2 = malloc( sizeof(int *) * n_threads); 
         count_pairs = malloc( sizeof(int *) * n_threads); 
 
-	stable_pairs_two(n_genes, size1, data1, max1, size2, data2, max2, max_equals,
+	stable_pairs_two(n_genes, size1, data1, max1_local, size2, data2, max2, max_equals,
 		         n_threads, pairs, count_pairs, exceptions1, exceptions2);
 
         struct FDR result1, result2;
@@ -1902,21 +1906,21 @@ int select_genes_bayesian(int           n_files,
           /* FDR control mode*/
           if (mode1==0)
           {
-            result1 = bh_ctrl(size1, max1, exceptions1[0], n_genes*(n_genes-1)/2 ,fdr1);
-               max1 = result1.index;
+            result1 = bh_ctrl(size1, max1_local, exceptions1[0], n_genes*(n_genes-1)/2 ,fdr1);
+            max1_local = result1.index;
           }
           else
           {
-            result1  = bh_eval(size1, max1, exceptions1[0], n_genes*(n_genes-1)/2);
+            result1  = bh_eval(size1, max1_local, exceptions1[0], n_genes*(n_genes-1)/2);
            result1.p =  bino_p(size1, result1.index);
           }
           /* print ouf statistics */
           fprintf(stdout, "# Data Set %d - Significantly Stable Gene Pairs \n", i1);
           fprintf(stdout, "#  FDR control level or max exception numbers: %g\n", fdr1);
           fprintf(stdout, "#  FDR actual level: %g\n", result1.value);
-          fprintf(stdout, "#  Max. exception numbers: %d\n", max1);
+          fprintf(stdout, "#  Max. exception numbers: %d\n", max1_local);
           fprintf(stdout, "#  Max. binomial test P value: %g\n", result1.p);
-          for(j=0; j<=max1; j++)
+          for(j=0; j<=max1_local; j++)
              fprintf(stdout, "#  Number of pairs with %d exceptions: %d\n", j, exceptions1[0][j]);
 
 	  /* open file to write stable pairs */
@@ -2006,8 +2010,8 @@ int select_genes_bayesian(int           n_files,
 	     unsigned char ce = ((unsigned char)(current >>5)) & 0b00000001;;
 	     unsigned char c1 = (unsigned char)(current >> 6); 
 	     unsigned char c2 = (unsigned char)(current >> 14); 
-             state =          ((      c1<=max1 && ne == 1)?1:0);
-             state = state | (((size1-c1<=max1 && ne == 1)?1:0)<<1);
+             state =          ((      c1<=max1_local && ne == 1)?1:0);
+             state = state | (((size1-c1<=max1_local && ne == 1)?1:0)<<1);
              state = state | (((      c2<=max2 && ce == 1)?1:0)<<2);
              state = state | (((size2-c2<=max2 && ce == 1)?1:0)<<3);
 
