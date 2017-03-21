@@ -1,4 +1,4 @@
-## Install from the Source File
+## Install from the Source Files
 1. Run the command `make` under this folder (`src`).
 2. Run the command `make install` to install the package. The default installation folder is `/usr/local/bin`. This requires `root` privilege. Alternatively, you may manually copy the executables (`reoa`, `cellcomp` and `onecomp`) to the folder where your PATH can find, such as `/usr/local/bin/`.
 3. Make sure the files have the correct executable permission (e.g. 755).  If it does not, use `chmod 755 reoa` to make the modification.
