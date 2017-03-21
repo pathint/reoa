@@ -9,10 +9,11 @@ cp reoa_linux64_gomp4 /usr/local/bin/reoa
 cp ../src/cellcomp /usr/local/bin/cellcomp
 reoa -h
 cellcomp -h
+onecomp -h
 ```
  
 ## About the Binary Files
 1. `reoa_linux64_gomp3` is compiled with gcc-4.7.3 with OpenMP Application Program Interface v3.0 enabled.
-2. `reoa_linux64_gomp4` is compiled with gcc-4.9.3 with OpenMP Application Program Interface v4.0 enabled. It requires the installation of OpenMP (`libgomp`) v4.0.
-
+2. `reoa_linux64_gomp4` is compiled with gcc-4.9.3 with OpenMP Application Program Interface v4.0 enabled. It requires the installation of OpenMP (`libgomp`) v4.0. The difference between the two is that the later has SIMD enabled.
+3. `cellcomp` and `onecomp` are Bash scripts which call the `reoa` executable to do the actual calculations. The scripts require the presence of GNU `getopt` function. 
 
