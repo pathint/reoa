@@ -54,11 +54,11 @@ or
 ```
 reoa --help
 ```
-The input data sets should be given as text-based data matrix data files. One file contains the microarray value matrix of one group of samples. The number of rows corresponds to the total number of gene probes and the number of rows corresponds to the sample size.  The values should be tab or space delimited. If multiple data sets are given as input, the number of genes should be the same. 
+The input data sets should be given as text-based data matrix data files. One file contains the microarray value matrix of one group of samples. The number of rows corresponds to the total number of gene probes and the number of columns corresponds to the sample size.  The values should be tab or space delimited. If multiple data sets are given as input, the number of genes should be the same. 
 
 The output gene pairs or dysregulated genes are given by the indices (starting from 0) of the genes. If the verbose option (`-v` or `--verbose`) is turn on, extensive amount of output will be printed out.  Please read the standard (screen) output for the names of the output files and the content format. 
 
-The most important option is `-j` (`--job`) which sets up the job type.  Job types 0~2 implement the identification of dysregulated genes and subtasks. Job types 3~4 are to generate simulation data sets and identify the dysregulated genes in simulated data sets. Job types 5~6 are to calculate the concordance scores between samples in one data set. 
+The most important option is `-j` (`--job`) which sets up the job type. Job types 0~2 identify stable gene pairs and dysregulated genes. Job types 3~4 generate simulation data sets and identify dysregulated genes in the simulated data sets. Job types 5~6 are to calculate the concordance scores between samples in one data set. 
 
 For most of job types, multiple data sets can be given. Three comparison modes are avaiable for selecting stable pairs and identifying dysregulated genes and related jobs. The choice can be made through the `-p` (`--pair`) option.  
 
