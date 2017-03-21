@@ -77,6 +77,7 @@ install: reoa
 	test -d $(prefix)/bin || mkdir $(prefix)/bin
 	install -m 0755 reoa $(prefix)/bin
 	install -m 0755 cellcomp $(prefix)/bin
+	install -m 0755 onecomp $(prefix)/bin
 
 # this is a suffix replacement rule for building .o's from .c's
 # it uses automatic variables $<: the name of the prerequisite of
