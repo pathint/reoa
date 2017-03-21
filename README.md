@@ -6,6 +6,9 @@ Besides the main program, `reoa`, this package also includes several derivative 
 1. *CellComp*.
 The `cellcomp` program is applicable to small-scale cell-line data which include only a few (e.g. two or three) technical replicates. See [below](https://github.com/pathint/reoa#small-scale-cell-line-data-with-two-or-three-technical-replicates) for usage.
 
+2. *OneComp*.
+The `onecomp` program is applicable to the datasets with only one case sample and possibly one control sample. See [below](https://github.com/pathint/reoa#small-scale-cell-line-data-with-two-or-three-technical-replicates) for usage.
+
 
 If you publish results from using this program, please cite the following paper.
 
@@ -104,6 +107,67 @@ Detailed usage information for `cellcomp` is as follows.
        0 - RankCompV2 only
        1 - Original RankComp only
        2 - Both RankComp and RankCompV2
+     -f, --fdr = FDR
+       False discovery rate (FDR) level. Default: 0.05
+     -c, --cycles = CYCLES
+       Maximum iteration cycles. Default: 128
+     -t, --threshold = THRESHOLD
+       Convergence criterion. Default: 50 
+       (Maximum fluctuation in number of DEGs)
+     -v, --verbose
+       Output extra information
+
+### Datasets with Only One Control Sample and One Case Sample
+Under this application scenario, background gene pairs, which show stable REOs in many normal samples, must be obtained before-hand. This can be achieved by applying `reoa` to the merged normal samples of a particular tissue or a cell line from the same or different data sources. The program `onecomp` first customizes the background gene pairs by filtering out those pairs with reversed REOs in the control sample(s) of the current dataset, then detects the DEGs in a case sample with the filtered background gene pairs.   
+
+#### NAME
+     onecomp, a bash script driver for application of reoa
+     to detect dysregulated genes in one treated sample
+     given a list of stable gene pairs and one paired control
+     sample.
+     
+#### SYNOPSIS
+     onecomp [-h|-V]
+     onecomp [OPTIONS] pair_file control_file treated_file
+     
+#### DESCRIPTION
+     OneComp (onecomp) is a program to apply the original RankComp 
+     and RankCompV2 algorithms to detect differentially expressed 
+     genes (DEGs) in one treated sample given the paired control 
+     sample and a list of predetermined gene pairs with stable REOs.
+     The control sample is used to customize the gene pair list
+     and 'paired' here does not necessarily mean the expermental
+     design but a compatiable corresponding relation between the two.
+     The 'control_file' and 'treated_file contains the expression
+     profiles of a group of control samples and a group of treated
+     samples. They should have the same number of rows (gene probes) 
+     and the same number of columns (number of samples). The i-th
+     column of 'control_file' and the i-th column of 'treated_file' 
+     constitue one paired sample and they are processed by the algo.
+     independent of the other columns.
+     The pair_file contains the list of predetermined gene pairs which
+     are given by the gene probe indices (0-based) which have the same
+     order as the expression files (control_file or treated_file).
+     The RankComp and RanCompV2 are based on the analysis of
+     within-sample relative expression orderings (REOs) of gene pairs.
+     See the references more details.
+     
+#### OPTIONS
+     -h, --help, --usage
+       Show this message
+     -V, --version
+       Show program version
+     -a, --algorithm = VALUE
+       Choice of algorithm. Default: 0
+       0 - RankCompV2 only
+       1 - Original RankComp only
+       2 - Both RankComp and RankCompV2
+     -m, --mode = VALUE
+       Choice of filter mode. Default: 0
+       0 - Use one control sample to filter the pairs to detect DEGs
+           in the corresponding treated sample
+       1 - Use all the control samples to filter the pairs to detect
+           DEGs in each treated samples
      -f, --fdr = FDR
        False discovery rate (FDR) level. Default: 0.05
      -c, --cycles = CYCLES
