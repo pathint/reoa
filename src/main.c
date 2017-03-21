@@ -1,4 +1,4 @@
-
+#include <string.h>
 #include "reoa.h"
 #include "main.h"
 
@@ -60,10 +60,16 @@ static void display_usage(FILE *f, const char *program_name)
  "                               5 - calculate concordance scores of gene pairs between two samples (columns) within one data set. This job requires at least one data set.\n"
  "                                   The concordance score is defined as the number of the same-ordered pairs divided by the total number of pairs.\n"
  "                               6 - calculate concordance scores among three samples (columns) within one data set. This job requires at least one data set.\n"
+ "                               7 - filter predetermined gene pairs using control sample, then identify dysregulated genes. See -P, -c and -l.\n"
+ "                                   predetermined gene paris are given in gene index (base 0) pairs which should be stored in ASCII text files and the file name is given as the parameter for -c and the number of pairs is given as the parameter for -l.\n"
+ "                               8 - (experimental).\n"
  "         -p, --pair = 0, 1, 2: comparison looping mode for calculations applied to multiple groups of data sets, default: 0\n"
  "                               0 - one vs many, the first data set is used as the control, i.e. 0v1, 0v2, 0v3...\n"
  "                               1 - many vs many,  all possible pair-wise combinations, i.e. 0v1, 0v2, 0v3..., 1v2, 1v3...\n" 
- "                               2 - consecutive pair comparison, i.e. 0v1, 2v3, 4v5...\n" 
+ "                               If --job =7, 0 means that the 1st control sample is used to filter the given stable gene pairs to detect the DEGs in the 1st treated sample, etc. Otherwise, each of the controls is used to filter the stable gene pairs in sequence; then the customized list of the stable gene pairs is used to detect DEGs in each treated sample.\n" 
+ "   -P, --platform = file_name: platform file, which contains the list of gene IDs , see --job = 7\n"
+ "                                   Required for `--job=7`.\n"
+ "           -L, --plines = NUM: number of record lines in the platform file, see --plines.\n"
  "    -c, --changes = file_name: configuration file for simulation data set generation, see --job = 3 or 4\n"
  "                               Each line contains two numbers: an integer followed by a real number \n"
  "                               the integer is the number of genes to be modified and the real number is\n"
@@ -104,17 +110,124 @@ static void display_version(FILE *f, const char *program_name)
 	  , program_name);
 } //end display_version
 
-int read_changes(const char *file_name, int n_changes, struct CHANGE changes[n_changes])
+int read_changes(const char *file_name, int clines, struct CHANGE changes[clines])
 {
    FILE *file;
    file = fopen(file_name, "r");
    int  status;
    int i;
-   for (i=0; i<n_changes; i++)
+   for (i=0; i<clines; i++)
    {
       status = fscanf(file, "%d", &changes[i].n);
       status = fscanf(file, "%g", &changes[i].level);
    }
+   return EXIT_SUCCESS;
+}
+
+int read_gene_list(const char *file_name, int ng, int genes[ng])
+{
+   FILE *file;
+   file = fopen(file_name, "r");
+   int status;
+   int i;
+   for (i=0; i<ng; i++)
+   {
+      status = fscanf(file, "%d", &genes[i]);
+   }
+   //ascending order
+   qsort(genes, ng, sizeof(*genes), comp_int);
+   return EXIT_SUCCESS;
+} // end of read_gene_list
+
+// pseudo-binary search
+int get_gene_index(int gene_id, int ng, int genes[ng])
+{
+   int low = 0, high = ng - 1;
+   if (gene_id == genes[0   ]) return 0;
+   if (gene_id == genes[ng-1]) return ng -1;
+
+   double ratio = (double) gene_id / genes[ng-1];
+   //fprintf(stderr, "%d, %d, ratio=%g\n", gene_id, genes[ng-1], ratio);
+   while (low <= high)
+   {
+     int middle = low + (high - low)*ratio;	
+     if (genes[middle] == gene_id) 
+	return middle;
+     else 
+	if (genes[middle] < gene_id)
+          low = middle + 1;
+        else 
+	   high = middle -1;
+   }//end of while
+   return -1;//not found
+}
+
+int read_pairs(const char *file_name, int np, struct pair0 pairs[np])
+{
+   FILE *file;
+   file = fopen(file_name, "r");
+   int status;
+   int i, h, l;
+   for (i=0; i<np; i++)
+   {
+      status = fscanf(file, "%d", &pairs[i].h);
+      status = fscanf(file, "%d", &pairs[i].l);
+   }
+   return EXIT_SUCCESS;
+}
+
+int read_pairs_full(const char *file_name, int np, struct pair0 pairs[np], int ng, int genes[ng])
+{
+   FILE *file;
+   file = fopen(file_name, "r");
+   int status;
+   int i, hi, li, h, l;
+   for (i=0; i<np; i++)
+   {
+      status = fscanf(file, "%d", &hi);
+      status = fscanf(file, "%d", &li);
+      h = get_gene_index(hi, ng, genes);
+      l = get_gene_index(li, ng, genes);
+      //fprintf(stderr, "%d\t%d\n", h, l);
+      if (h > -1 && l > -1) 
+      {
+	 pairs[i].h = h;
+	 pairs[i].l = l;
+      }
+      else 
+      {
+	fprintf(stderr, "ERROR: At least one of {%d, %d} does not appear in the platform file.\n", hi, li);
+	exit(EXIT_FAILURE);
+      }
+   }
+   return EXIT_SUCCESS;
+}
+
+int read_indexed_data(char *file_name, int nd, int sample_size, DATATYPE_VALUE *data, int ng, int genes[ng])
+{
+   int id, i, j, k, status;
+   FILE *file = fopen(file_name, "r");
+
+   if (file == NULL) 
+   {
+      fprintf(stderr, "ERROR: file %s cannot be open to read.\n", file_name);
+      exit(EXIT_FAILURE);
+   }
+
+   for (j=0; j<nd; j++)
+   {
+      status = fscanf(file, "%d", &id);
+      i = get_gene_index(id, ng, genes);
+      if (i<0) 
+      {
+	fprintf(stderr, "ERROR: Gene %d does not appear in the platform file.\n", id);
+	exit(EXIT_FAILURE);
+      }
+      for (k=0; k<sample_size; k++)
+	status = fscanf(file, "%g", &data[i*sample_size+k]);
+   
+   }
+   fclose(file);
    return EXIT_SUCCESS;
 }
 
@@ -1596,11 +1709,24 @@ int select_consistent_pairs_ind2(int           n_files,
            out_file1 = stderr;
         }
         fprintf(stdout, "#  Writing gene states to file: %s\n", out_name1);
-        fprintf(stdout, "#  Gene state code: rightmost 1st and 2nd  two bits for results given by the default RankComp 2.0 algorithm.\n");
+        fprintf(stdout, "#  Gene state code: from the far right side, the 1st and 2nd two bits for results given by the default RankComp V2.0 algorithm.\n");
         fprintf(stdout, "#                   the 3rd and 4th bits for results given by the original RankComp algorithm.\n");
         fprintf(stdout, "#                   00 for flat genes, 01 for down-regulated genes, 10 for up-regulated genes.\n");
-        fprintf(stdout, "#  Example: 0, flat by both algo. 1, down given by the RankComp 2.0 algo but flat by the original algo.\n");
-        fprintf(stdout, "#           5, down given by both algo. 10, up given by both algo.\n");
+        fprintf(stdout, "#  For example:\n");
+        fprintf(stdout, "#   if -a = 0, the default RankComp V2.0 algorithm is used. There are three possible states for each gene.\n");
+        fprintf(stdout, "#                   0, non-dysregulated genes\n");
+        fprintf(stdout, "#                   1, down-regulated genes\n");
+        fprintf(stdout, "#                   2, up-regulated genes\n");
+        fprintf(stdout, "#   if -a = 1, the original RankComp algorithm is used. There are also three possible states for each gene.\n");
+        fprintf(stdout, "#                   0, non-dysregulated genes\n");
+        fprintf(stdout, "#                   4, down-regulated genes\n");
+        fprintf(stdout, "#                   8, up-regulated genes\n");
+        fprintf(stdout, "#   if -a = 2, both the original RankComp algorithm and V2.0 algorithm are used. There are nine possible states for each gene.\n");
+        fprintf(stdout, "#                   0, non-dysregulated genes by both algorithms\n");
+        fprintf(stdout, "#                   5 (=1+4), down-regulated genes by both algorithms\n");
+        fprintf(stdout, "#                   10 (=2+8). up-regulated genes by both algorithms\n");
+        fprintf(stdout, "#                   9 (=1+9), down-regulated by V2.0 algorithm, up-regulated by the original algorithm\n");
+        fprintf(stdout, "#                   6 (=2+4), up-regulated by V2.0 algorithm, down-regulated by the original algorithm\n");
         free(out_name1);
 	for (j=0; j<n_genes; j++)
 	{
@@ -1626,11 +1752,11 @@ int select_consistent_pairs_ind2(int           n_files,
 } // end of select_stable_pairs_ind
 
 /******************************************************************************
- * Job type 7: new algo. based on the Bayesian idea
+ * Job type 8: new algo. based on the Bayesian idea
  *  Input: Data Files, FDR Levels (or Max Exception Number), max_equals, mode
  * Output: concordant and reversed gene pairs 
  ******************************************************************************/
-int select_genes__bayesian(int           n_files, 
+int select_genes_bayesian(int           n_files, 
 		        char      *files[n_files],
 			int sample_sizes[n_files],
 			float        fdr[n_files],
@@ -2024,6 +2150,202 @@ int select_genes__bayesian(int           n_files,
   return EXIT_SUCCESS;
 } // end of select_genes_bayesian
 
+/********************************************
+ * Given a list of stable gene pairs
+ * 1) Use one control sample or a set of control samples to filter the gene pair list
+ * 2) Use the filtered stable gene pairs to identify the DEGS in one treated sample.
+ *******************************************/
+int select_genes_one(int                clines,
+		     char               *cname,
+		     int               n_files,
+		     char      *files[n_files],
+		     int sample_sizes[n_files],
+		     float        fdr[n_files],
+		     int               n_genes,
+		     float               alpha, 
+		     int            max_cycles, 
+		     int            ori_cycles, 
+		     int         max_threshold,
+		     char            algorithm,
+		     char		  mode
+		     ) 
+{
+  /* read predetermined gene pairs into memory */
+  struct pair0 *pairs;
+  pairs = malloc(sizeof(struct pair0) * clines);
+  read_pairs(cname, clines, pairs);
+  /* read control data file, the first file is the control, the second is the treated sample. The rest if any is discarded */
+  int             size1 = sample_sizes[0];
+  int             size2 = sample_sizes[1];
+  char           *file1 =        files[0];
+  char           *file2 =        files[1];
+  DATATYPE_VALUE *data1 = malloc( sizeof(DATATYPE_VALUE) * n_genes * size1);
+  DATATYPE_VALUE *data2 = malloc( sizeof(DATATYPE_VALUE) * n_genes * size2);
+  if (data1 == NULL || data2 == NULL) 
+  {
+     fprintf(stderr, "ERROR: memory is not allocated for data file %s or %s.\n", file1, file2);
+     exit(EXIT_FAILURE);
+  }
+  read_data(file1, n_genes, size1, data1);
+  read_data(file2, n_genes, size2, data2);
+  int i, j, size;
+  if (mode == 0) 
+     size = size1<=size2?size1:size2;
+  else
+     size = size2;
+
+  #pragma omp parallel for 
+  for (i=0; i<size; i++)
+  {
+     DATATYPE_VALUE *control, *treated;
+     if (mode == 0)
+     {
+       control = malloc( sizeof(DATATYPE_VALUE) * n_genes);
+       extract_column(n_genes, size1, data1, i, control);
+     }
+     treated = malloc( sizeof(DATATYPE_VALUE) * n_genes);
+     extract_column(n_genes, size2, data2, i, treated);
+     if (algorithm == 0||algorithm ==2)
+     {
+       //state for each gene, not pairs
+       struct gene_state **gene_result;//an array of pointers to struct 
+       //allocate an array of n pointers to struct gene_states
+       gene_result = (struct gene_state **) malloc(sizeof(struct gene_state *)*n_genes);
+       //initialization
+       for (j=0; j<n_genes; j++) gene_result[j] = (struct gene_state *) NULL;
+       /* identify DEGS using the treated sample */ 
+       fprintf(stdout, "#  Filter dysregulated genes using RankComp V2 algo ...\n");
+       if (mode == 0)
+          filter_deg_one(clines, pairs, n_genes, 1, control, treated, gene_result, \
+          	    alpha, max_cycles, max_threshold);
+       else
+          filter_deg_one(clines, pairs, n_genes, size1, data1, treated, gene_result, \
+          	    alpha, max_cycles, max_threshold);
+
+       /* write dysregulated genes into files*/
+       char *out_name1 = malloc(sizeof(char *)*10);
+       char *out_name2 = malloc(sizeof(char *)*10);
+	     out_name1 = make_file_name(UP,   i, EXT, out_name1);
+	     out_name2 = make_file_name(DOWN, i, EXT, out_name2);
+
+       FILE *out_file1 = fopen(out_name1, "w");
+       FILE *out_file2 = fopen(out_name2, "w");
+       if (out_file1 == NULL)
+       {
+          out_name1 = "stderr";
+          out_file1 = stderr;
+       }
+       if (out_file2 == NULL)
+       {
+          out_name2 = "stderr";
+          out_file2 = stderr;
+       }
+       fprintf(stdout, "#  Writing up-regulated genes into file: %s\n",   out_name1);
+       fprintf(stdout, "#  Writing down-regulated genes into file: %s\n", out_name2);
+       free(out_name1);
+       free(out_name2);
+
+       int j;
+       for(j=0;j<n_genes;j++)
+          if(gene_result[j]!=NULL)
+          {
+              switch(gene_result[j]->state)
+              {
+                case 2:
+                   fprintf(out_file1, "%d", j);
+                   if (VERBOSE) fprintf(out_file1, "\t%.4g", gene_result[j]->p);
+                   fprintf(out_file1, "\n");
+                   break;
+                 case 1:
+                    fprintf(out_file2, "%d", j);
+                    if (VERBOSE) fprintf(out_file2, "\t%.4g", gene_result[j]->p);
+                    fprintf(out_file2, "\n");
+                    break;
+              }//end switch
+              free(gene_result[j]);
+          }
+       if (out_file1 != stderr) fclose(out_file1);
+       if (out_file2 != stderr) fclose(out_file2);
+       free(gene_result);
+     }//end if algo.
+
+     if (algorithm == 1||algorithm ==2)
+     {
+       //state for each gene, not pairs
+       struct gene_state2 **gene_result;//an array of pointers to struct 
+       //allocate an array of n pointers to struct gene_states
+       gene_result = (struct gene_state2 **) malloc(sizeof(struct gene_state2 *)*n_genes);
+       //initialization
+       for (j=0; j<n_genes; j++) gene_result[j] = (struct gene_state2 *) NULL;
+       /* identify DEGS using the treated sample */ 
+       fprintf(stdout, "#  Filter dysregulated genes using RankComp original algo ...\n");
+       if (mode == 0)
+           filter_deg_one_orig(clines, pairs, n_genes, 1, control, treated, gene_result, \
+          	    alpha, ori_cycles, max_threshold);
+       else
+           filter_deg_one_orig(clines, pairs, n_genes, size1, data1, treated, gene_result, \
+          	    alpha, ori_cycles, max_threshold);
+
+       /* write dysregulated genes into files*/
+       char *out_name1 = malloc(sizeof(char *)*10);
+       char *out_name2 = malloc(sizeof(char *)*10);
+	     out_name1 = make_file_name(UP_ORIG,   i, EXT, out_name1);
+	     out_name2 = make_file_name(DOWN_ORIG, i, EXT, out_name2);
+
+       FILE *out_file1 = fopen(out_name1, "w");
+       FILE *out_file2 = fopen(out_name2, "w");
+       if (out_file1 == NULL)
+       {
+          out_name1 = "stderr";
+          out_file1 = stderr;
+       }
+       if (out_file2 == NULL)
+       {
+          out_name2 = "stderr";
+          out_file2 = stderr;
+       }
+       fprintf(stdout, "#  Writing up-regulated genes into file: %s\n",   out_name1);
+       fprintf(stdout, "#  Writing down-regulated genes into file: %s\n", out_name2);
+       free(out_name1);
+       free(out_name2);
+
+       int j;
+       for(j=0;j<n_genes;j++)
+          if(gene_result[j]!=NULL)
+          {
+              switch(gene_result[j]->state)
+              {
+                case 2:
+                   fprintf(out_file1, "%d", j);
+                   if (VERBOSE) fprintf(out_file1, "\t%.4g", gene_result[j]->p);
+                   fprintf(out_file1, "\n");
+                   break;
+                 case 1:
+                    fprintf(out_file2, "%d", j);
+                    if (VERBOSE) fprintf(out_file2, "\t%.4g", gene_result[j]->p);
+                    fprintf(out_file2, "\n");
+                    break;
+              }//end switch
+              free(gene_result[j]);
+          }
+       if (out_file1 != stderr) fclose(out_file1);
+       if (out_file2 != stderr) fclose(out_file2);
+       free(gene_result);
+     }
+
+     /* clear */
+     if (mode == 0) free(control);
+     free(treated);
+  }//end of for
+
+  /* clear */
+  free(data1);
+  free(data2);
+  free(pairs);
+}
+//end of select_genes_one
+
+
 /* generate simulation data set */
 int  gen_simulation_data(int  times,
 		        char *fname,
@@ -2281,7 +2603,9 @@ int main (int argc, char **argv)
   int   ori_cycles        = 2;
   int   conv_threshold    = 50;
   char *cname             = "";
-  int   n_changes         = 0;
+  char *pname             = "";
+  int   clines            = 0;
+  int   plines            = 0;
 
   int   int_current;
   float float_current;
@@ -2377,14 +2701,33 @@ int main (int argc, char **argv)
 	  else cname = optarg;
           break;
 
+        case 'P':
+          if ( access(optarg, R_OK) == -1)
+          {
+              fprintf(stderr, "ERROR: platform file, --platform %s does not exist or not readable.\n", optarg);
+              exit(EXIT_FAILURE);
+          }
+	  else pname = optarg;
+          break;
+
         case 'l':
 	  int_current = atoi(optarg);
 	  if (int_current < 1)
 	  {
-	    fprintf(stderr, "ERROR: --lines should be given a positive  integer.\n");
+	    fprintf(stderr, "ERROR: --lines (-l) should be given a positive integer.\n");
 	    exit(EXIT_FAILURE);
 	  }
-	  else n_changes  = int_current;
+	  else clines  = int_current;
+          break;
+
+        case 'L':
+	  int_current = atoi(optarg);
+	  if (int_current < 1)
+	  {
+	    fprintf(stderr, "ERROR: --plines (-L) should be given a positive integer.\n");
+	    exit(EXIT_FAILURE);
+	  }
+	  else plines  = int_current;
           break;
 
         case 't':
@@ -2556,8 +2899,24 @@ int main (int argc, char **argv)
       break;
 
     case 7:
-      fprintf(stdout, "#Job type 6\n");
-      select_genes__bayesian(n_files, files, sample_sizes, fdr_levels, n_genes, max_equals, \
+      //if (strlen(cname)>0 && strlen(pname)>0 && clines > 0 && plines > 0)
+      if (strlen(cname)>0 && clines > 0)
+      {
+        fprintf(stdout, "#Job type 7\n");
+        //select_genes_one(plines, pname, clines, cname, n_files, files, sample_sizes, fdr_levels, n_genes, \
+	//	         fdr_level, max_cycles, ori_cycles, conv_threshold, algorithm);
+        select_genes_one(clines, cname, n_files, files, sample_sizes, fdr_levels, n_genes, \
+		         fdr_level, max_cycles, ori_cycles, conv_threshold, algorithm, pair_mode);
+      }
+      else 
+      {
+        fprintf(stderr, "ERROR: Missing -c, -P, -l or -L argument value(s).\n");
+      }
+      break;
+
+    case 8: //experimental
+      fprintf(stdout, "#Job type 8\n");
+      select_genes_bayesian(n_files, files, sample_sizes, fdr_levels, n_genes, max_equals, \
 		             job_type, pair_mode);
       break;
 
@@ -2585,13 +2944,13 @@ int main (int argc, char **argv)
 
     case 3:
       fprintf(stdout, "#Job type 3\n");
-      gen_simulation_data(times, files[0], sample_sizes[0], n_genes, n_changes, cname, simu_names,
+      gen_simulation_data(times, files[0], sample_sizes[0], n_genes, clines, cname, simu_names,
 			max_equals, job_type, fdr_level, max_cycles, ori_cycles,conv_threshold, algorithm);
       break;
 
     case 4:
       fprintf(stdout, "#Job type 4\n");
-      gen_simulation_data(times, files[0], sample_sizes[0], n_genes, n_changes, cname, simu_names,
+      gen_simulation_data(times, files[0], sample_sizes[0], n_genes, clines, cname, simu_names,
 			max_equals, job_type, fdr_level, max_cycles, ori_cycles,conv_threshold, algorithm);
 
       float local_fdr_levels[times+1];
