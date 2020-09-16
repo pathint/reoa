@@ -10,7 +10,11 @@ The `cellcomp` program is applicable to small-scale cell-line data which include
 The `onecomp` program is applicable to the datasets with only one case sample and possibly one control sample. See [below](https://github.com/pathint/reoa/blob/master/README.md#datasets-with-only-one-control-sample-and-one-case-sample) for usage.
 
 
-If you publish results from using this program, please cite the following paper.
+If you publish results from using this program, please cite the following publications.
+
+Xiangyu Li, Hao Cai, Xianlong Wang, Lu Ao, You Guo, Jun He, Yunyan Gu, Lishuang Qi, Qingzhou Guan, Xu Lin, Zheng Guo.
+A rank-based algorithm of differential expression analysis for small cell line data with statistical control.
+Briefings in Bioinformatics, Volume 20, Issue 2, March 2019, Pages 482–491, https://doi.org/10.1093/bib/bbx135.
 
 Hongwei Wang, Qiang Sun, Wenyuan Zhao, Lishuang Qi, Yunyan Gu, Pengfei Li, Mengmeng Zhang, Yang Li, Shu-Lin Liu, and Zheng Guo. (**2015**). Individual-level analysis of differential expression of genes and pathways for personalized medicine. *Bioinformatics*. 31(1):62-8. [DOI:10.1093/bioinformatics/btu522](http://dx.doi.org/10.1093/bioinformatics/btu522).
 
