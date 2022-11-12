@@ -1,5 +1,11 @@
+## Update on Nov 12, 2022
+Users are advised to use the updated RankCompV3 algorithm (https://github.com/pathint/RankCompV3.jl) which is implemented with Julia.
+
 # Relative Expression Ordering Analysis (REOA) package
+
 This program implements the original RankComp and the RankCompV2 algorithms to detect the dysregulated genes. It is applicable to gene expression, methylation and other gene microarray data sets. Both large-scale cohort and individual samples or small-scale cell-line samples with two or three technical replicates can be analyzed. 
+
+
 
 Besides the main program, `reoa`, this package also includes several derivative programs which apply the method to specific scenarios. 
 
